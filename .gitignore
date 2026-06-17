@@ -1,0 +1,30 @@
+# Swift build artifacts
+.build/
+*.o
+*.d
+
+# App bundle (distributed via GitHub Releases, not committed)
+*.app
+*.zip
+*.dmg
+
+# Icon build intermediates
+tools/png/
+tools/*.iconset/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+.swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.cursor/
+*.swp
