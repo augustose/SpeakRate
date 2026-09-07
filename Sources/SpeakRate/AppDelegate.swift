@@ -3,6 +3,23 @@ import SwiftUI
 import Carbon
 import ApplicationServices
 
+/// A selectable shortcut for the "Read selection" action.
+struct ReadShortcut {
+    let id: String
+    let label: String
+    let keyCode: UInt32
+    let modifiers: UInt32
+}
+
+let readShortcutPresets: [ReadShortcut] = [
+    ReadShortcut(id: "opt-cmd-r", label: "⌥⌘R", keyCode: 15, modifiers: UInt32(optionKey | cmdKey)),
+    ReadShortcut(id: "opt-cmd-e", label: "⌥⌘E", keyCode: 14, modifiers: UInt32(optionKey | cmdKey)),
+    ReadShortcut(id: "ctrl-opt-r", label: "⌃⌥R", keyCode: 15, modifiers: UInt32(controlKey | optionKey)),
+    ReadShortcut(id: "ctrl-opt-s", label: "⌃⌥S", keyCode: 1, modifiers: UInt32(controlKey | optionKey)),
+    ReadShortcut(id: "ctrl-cmd-r", label: "⌃⌘R", keyCode: 15, modifiers: UInt32(controlKey | cmdKey)),
+    ReadShortcut(id: "ctrl-opt-space", label: "⌃⌥Space", keyCode: 49, modifiers: UInt32(controlKey | optionKey)),
+]
+
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     var menu: NSMenu!
@@ -10,6 +27,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var hotKeyFaster: EventHotKeyRef?
     var hotKeySlower: EventHotKeyRef?
     var bannerWindow: NSWindow?
+
+    var currentReadShortcut: ReadShortcut {
+        let id = UserDefaults.standard.string(forKey: "readShortcutID") ?? "opt-cmd-r"
+        return readShortcutPresets.first { $0.id == id } ?? readShortcutPresets[0]
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -50,7 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let speak = NSMenuItem(title: "Speak Selection / Stop  ⌥⌘R", action: #selector(speakTapped), keyEquivalent: "")
+        let speak = NSMenuItem(title: "Speak Selection / Stop  \(currentReadShortcut.label)", action: #selector(speakTapped), keyEquivalent: "")
         speak.target = self
         menu.addItem(speak)
 
@@ -67,6 +89,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let reset = NSMenuItem(title: "Reset Speed", action: #selector(resetTapped), keyEquivalent: "")
         reset.target = self
         menu.addItem(reset)
+
+        // Read shortcut submenu
+        let scItem = NSMenuItem(title: "Read Shortcut", action: nil, keyEquivalent: "")
+        let scMenu = NSMenu()
+        for preset in readShortcutPresets {
+            let mi = NSMenuItem(title: preset.label, action: #selector(changeReadShortcut(_:)), keyEquivalent: "")
+            mi.target = self
+            mi.representedObject = preset.id
+            mi.state = (preset.id == currentReadShortcut.id) ? .on : .off
+            scMenu.addItem(mi)
+        }
+        scItem.submenu = scMenu
+        menu.addItem(scItem)
 
         let access = NSMenuItem(title: "Open Accessibility Settings…", action: #selector(openAccessibility), keyEquivalent: "")
         access.target = self
@@ -105,7 +140,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         SelectionReader.capture { [weak self] text in
             guard let self = self else { return }
             guard let text = text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                self.showBanner(top: nil, big: "No text selected", sub: "Select text, then ⌥⌘R")
+                self.showBanner(top: nil, big: "No text selected", sub: "Select text, then \(self.currentReadShortcut.label)")
                 return
             }
             SpeechReader.shared.speak(text)
@@ -217,12 +252,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: - Hotkeys
 
+    @objc func changeReadShortcut(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(id, forKey: "readShortcutID")
+        // Unregister the old read hotkey and re-register with the new combo
+        if let ref = hotKeySpeak { UnregisterEventHotKey(ref); hotKeySpeak = nil }
+        let sc = currentReadShortcut
+        var idSpeak = EventHotKeyID(); idSpeak.signature = OSType("SPSP".fourCharCode); idSpeak.id = 1
+        RegisterEventHotKey(sc.keyCode, sc.modifiers, idSpeak, GetApplicationEventTarget(), 0, &hotKeySpeak)
+        showBanner(top: "Read shortcut", big: sc.label, sub: nil)
+    }
+
     func registerHotKeys() {
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
 
-        // ⌥⌘R — speak/stop (keyCode 15 = 'r')
+        // Read/stop — configurable
+        let sc = currentReadShortcut
         var idSpeak = EventHotKeyID(); idSpeak.signature = OSType("SPSP".fourCharCode); idSpeak.id = 1
-        RegisterEventHotKey(15, UInt32(optionKey | cmdKey), idSpeak, GetApplicationEventTarget(), 0, &hotKeySpeak)
+        RegisterEventHotKey(sc.keyCode, sc.modifiers, idSpeak, GetApplicationEventTarget(), 0, &hotKeySpeak)
 
         // ⌥⌘→ — faster (keyCode 124)
         var idFast = EventHotKeyID(); idFast.signature = OSType("SPFA".fourCharCode); idFast.id = 2
