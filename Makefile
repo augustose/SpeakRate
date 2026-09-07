@@ -1,6 +1,9 @@
 APP_NAME = SpeakRate
 BUILD_DIR = .build/release
 APP_BUNDLE = $(APP_NAME).app
+# Stable code-signing identity so the Accessibility grant persists across rebuilds.
+# Falls back to ad-hoc (-) if the cert isn't installed (e.g. for other contributors).
+SIGN_IDENTITY ?= $(shell security find-identity -v -p codesigning 2>/dev/null | grep -q "SpeakRate Self-Signed" && echo "SpeakRate Self-Signed" || echo "-")
 
 build:
 	swift build -c release
@@ -12,7 +15,7 @@ bundle: build
 	cp $(BUILD_DIR)/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
 	cp Sources/SpeakRate/Info.plist $(APP_BUNDLE)/Contents/
 	cp Sources/SpeakRate/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
-	codesign --force --sign - $(APP_BUNDLE)
+	codesign --force --sign "$(SIGN_IDENTITY)" $(APP_BUNDLE)
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
 RELEASE_ZIP = $(APP_NAME)-$(VERSION)-arm64.zip
