@@ -1,6 +1,7 @@
 import AVFoundation
 import NaturalLanguage
 import AppKit
+import SpeakRateCore
 
 /// Speaks text with AVSpeechSynthesizer, with full control over rate.
 /// Supports live rate changes by restarting from the current word.
@@ -46,8 +47,10 @@ class SpeechReader: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
         guard !trimmed.isEmpty else { return }
 
         if offset == 0 {
-            currentText = trimmed
-            currentLanguage = detectLanguage(trimmed)
+            let language = detectLanguage(trimmed)
+            currentLanguage = language
+            currentText = skipTechnicalText ? TextSanitizer.sanitize(trimmed, language: language) : trimmed
+            guard !currentText.isEmpty else { return }
         }
         spokenOffset = offset
         utteranceStartOffset = offset
@@ -121,6 +124,15 @@ class SpeechReader: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
         if let premium = matching.first(where: { $0.quality == .premium }) { return premium }
         if let enhanced = matching.first(where: { $0.quality == .enhanced }) { return enhanced }
         return matching.first ?? AVSpeechSynthesisVoice(language: language)
+    }
+
+    // MARK: - Skip technical text preference
+
+    /// When enabled, URLs, paths, inline code and hashes are replaced with
+    /// short placeholders before speaking. Applies to the next reading.
+    var skipTechnicalText: Bool {
+        get { UserDefaults.standard.bool(forKey: "skipTechnicalText") }
+        set { UserDefaults.standard.set(newValue, forKey: "skipTechnicalText") }
     }
 
     // MARK: - Persistence

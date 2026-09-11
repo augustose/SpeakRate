@@ -90,6 +90,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         reset.target = self
         menu.addItem(reset)
 
+        let skip = NSMenuItem(title: "Skip Technical Text", action: #selector(toggleSkipTechnical), keyEquivalent: "")
+        skip.target = self
+        skip.state = SpeechReader.shared.skipTechnicalText ? .on : .off
+        skip.toolTip = "Replace URLs, file paths, inline code and hashes with short placeholders when reading"
+        menu.addItem(skip)
+
+        menu.addItem(.separator())
+
         // Read shortcut submenu
         let scItem = NSMenuItem(title: "Read Shortcut", action: nil, keyEquivalent: "")
         let scMenu = NSMenu()
@@ -121,6 +129,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         while SpeechReader.shared.rate > 0.51 { SpeechReader.shared.decrease() }
         updateIcon()
         showBanner(top: "Speed", big: "\(SpeechReader.shared.wpm()) wpm", sub: nil)
+    }
+
+    @objc func toggleSkipTechnical() {
+        SpeechReader.shared.skipTechnicalText.toggle()
+        let on = SpeechReader.shared.skipTechnicalText
+        showBanner(top: "Skip Technical Text", big: on ? "On" : "Off",
+                   sub: on ? "URLs, paths and code will be summarized" : nil)
     }
 
     @objc func openAccessibility() {
