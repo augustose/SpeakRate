@@ -116,6 +116,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(access)
 
         menu.addItem(.separator())
+
+        let about = NSMenuItem(title: "About SpeakRate…", action: #selector(aboutTapped), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
+
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 
@@ -136,6 +141,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let on = SpeechReader.shared.skipTechnicalText
         showBanner(top: "Skip Technical Text", big: on ? "On" : "Off",
                    sub: on ? "URLs, paths and code will be summarized" : nil)
+    }
+
+    @objc func aboutTapped() {
+        AboutWindow.show()
     }
 
     @objc func openAccessibility() {
