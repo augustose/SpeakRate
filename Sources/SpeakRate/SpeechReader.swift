@@ -49,7 +49,8 @@ class SpeechReader: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
         if offset == 0 {
             let language = detectLanguage(trimmed)
             currentLanguage = language
-            currentText = skipTechnicalText ? TextSanitizer.sanitize(trimmed, language: language) : trimmed
+            let sanitized = skipTechnicalText ? TextSanitizer.sanitize(trimmed, language: language) : trimmed
+            currentText = TextNormalizer.normalize(sanitized)
             guard !currentText.isEmpty else { return }
         }
         spokenOffset = offset
