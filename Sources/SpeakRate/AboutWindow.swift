@@ -46,34 +46,42 @@ enum AboutWindow {
 
 private struct AboutView: View {
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 16) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 64, height: 64)
+                .frame(width: 72, height: 72)
+                .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
 
-            Text(AboutWindow.appName)
-                .font(.title2.bold())
-            Text("Version \(AboutWindow.version)")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(spacing: 3) {
+                Text(AboutWindow.appName)
+                    .font(.title2.bold())
+                Text("Version \(AboutWindow.version)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             Text("Made with love, for everyone, for free.\nBecause good tools should just exist.")
                 .font(.system(size: 12))
                 .multilineTextAlignment(.center)
-
-            Text("MIT licensed — free for everyone, forever.")
-                .font(.caption)
                 .foregroundColor(.secondary)
 
-            HStack(spacing: 14) {
+            Divider()
+                .frame(width: 200)
+
+            HStack(spacing: 18) {
                 Link("Blog", destination: URL(string: AboutWindow.blogURL)!)
                 Link("GitHub", destination: URL(string: AboutWindow.githubURL)!)
                 Link("What's New", destination: URL(string: AboutWindow.whatsNewURL)!)
-                Link(AboutWindow.email, destination: URL(string: "mailto:\(AboutWindow.email)")!)
+                Link("Email", destination: URL(string: "mailto:\(AboutWindow.email)")!)
             }
-            .font(.system(size: 12))
+            .font(.system(size: 12, weight: .medium))
+
+            Text("MIT licensed — free for everyone, forever.")
+                .font(.system(size: 10))
+                .foregroundColor(Color.secondary.opacity(0.8))
         }
-        .padding(24)
-        .frame(width: 300)
+        .padding(.vertical, 26)
+        .padding(.horizontal, 24)
+        .frame(width: 340)
     }
 }
