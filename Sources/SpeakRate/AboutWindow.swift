@@ -6,6 +6,7 @@ enum AboutWindow {
     private static var window: NSWindow?
 
     static let githubURL = "https://github.com/augustose/SpeakRate"
+    static let whatsNewURL = "https://github.com/augustose/SpeakRate/blob/main/CHANGELOG.md"
     static let blogURL = "https://augustose.web.app"
     static let email = "augustose@senet.ca"
 
@@ -67,6 +68,7 @@ private struct AboutView: View {
             HStack(spacing: 14) {
                 Link("Blog", destination: URL(string: AboutWindow.blogURL)!)
                 Link("GitHub", destination: URL(string: AboutWindow.githubURL)!)
+                Link("What's New", destination: URL(string: AboutWindow.whatsNewURL)!)
                 Link(AboutWindow.email, destination: URL(string: "mailto:\(AboutWindow.email)")!)
             }
             .font(.system(size: 12))
